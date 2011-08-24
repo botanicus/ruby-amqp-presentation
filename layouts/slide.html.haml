@@ -1,0 +1,15 @@
+- extends "base.html"
+
+- block(:title, item.metadata[:title])
+- block(:javascripts, ["presentation.js"])
+- block(:stylesheets, ["pygments.css"])
+- block(:head) do
+  %script
+    == page = {next: #{item.next_page.to_json}, previous: #{item.previous_page.to_json}};
+
+= block(:body) do
+  - if item.metadata[:title]
+    %h1.title= item.metadata[:title]
+  - if item.metadata[:subtitle]
+    %h2.subtitle= item.metadata[:subtitle]
+  ~ item.content

@@ -1,0 +1,29 @@
+!!! 5
+%html
+  %head
+    / Metadata.
+    %title= block(:title, item.site.metadata[:title])
+    %meta{"http-equiv" => "Content-Type", content: "text/html; charset=utf-8"}
+    %meta{"http-equiv" => "Content-Language", content: "en"}
+    %meta{name: "description", content: item.site.metadata[:description]}
+    %meta{name: "keywords", content: item.site.metadata[:keywords].join(", ")}
+
+    / Assets.
+    = pupu :mootools
+    = pupu :blueprint, plugins: ["fancy-type"]
+
+    - block(:stylesheets, Array.new).each do |stylesheet|
+      %link{href: "/assets/css/#{stylesheet}", media: "screen,projection", rel: "stylesheet", type: "text/css"}
+
+    - block(:javascripts, Array.new).each do |javascript|
+      %script{src: "/assets/js/#{javascript}"}
+
+    = block(:head)
+
+  %body
+    .container
+      #main.span-15
+        ~ block(:body)
+
+      #footer.span-24
+        == &copy; #{Time.now.year} Jakub Stastny aka botanicus | Powered by <a href="https://github.com/botanicus/ace">Ace</a>.

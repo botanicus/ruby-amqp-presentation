@@ -1,0 +1,172 @@
+---
+title: WTF Is Messaging And Why You Should Use It?
+author: Jakub Stastny aka @botanicus
+keywords: ["messaging", "AMQP"]
+description: Intro to messaging.
+---
+
+%slide
+  %h1.main WTF Is *Messaging* And Why You Should Use It?
+  %h2.main
+    *@botanicus*
+    *RabbitMQ* team of *VMware*
+
+%slide{title: "About Me", format: "textile"}
+  .span-7
+    * Ruby & JS *contractor*
+    * *RabbitMQ* team of *VMware*
+    * London, UK
+    * "@botanicus":http://twitter.com/botanicus
+    * "Blog 101ideas.cz":http://blog.101ideas.cz
+  .span-7
+    %img{src: "/assets/img/botanicus.jpg"}
+
+%slide{title: "Motivation", format: "textile"}
+  * Messaging is a very useful technique which can significantly *improve design* of your apps, as well as *robustness*, it can make *scaling* much easier.
+  * Many developers don't know about it.
+
+%slide{title: "What Is Messaging?", format: "textile"}
+  * *Sending messages* between *isolated entities* (usually apps, but can be also threads, as in Erlang).
+  * Usually through a *messaging broker*.
+  * *Asynchronous*, suitable for *distributed systems*.
+  * *Push*, not pull.
+
+%slide
+  %img{src: "/assets/img/push-vs-pull.png"}
+  From http://www.j5live.com
+
+%slide{title: "#1 Better Design, Easier Maintainance", format: "textile"}
+  * *Decoupling* -> small, *isolated apps*.
+  * Greatly *reduces complexity*.
+  * Isolation -> it's easy to *rewrite* just the *critical parts* into Java or C.
+  * *Simple integration* with legacy systems, no need to rewrite everything.
+  * It's *dead-easy to inspect* what's going through.
+
+%slide
+  :javascript
+    // https://github.com/postwait/node-amqp
+    var amqp = require("./node-amqp/amqp");
+    var sys  = require("sys");
+
+    var connection = amqp.createConnection({port: 5673});
+
+    // Wait for connection to become established.
+    connection.on("ready", function () {
+      var queue = connection.queue("test-queue");
+      queue.on("open", function () {
+        var exchange = connection.exchange("test-exchange", {type: "direct"});
+        exchange.on("open", function () {
+          exchange.publish(queue.name, "Hey NodeCampers!");
+        });
+      });
+    });
+
+  TODO: Arrow.
+
+  %img{src: "/assets/img/tracer.png"}
+
+%slide{title: "#2 Scalability", format: "textile"}
+  * Improve *responsiveness* by doing CPU-intensive tasks later in an *asynchronous* manner.
+  * Scale *only the parts* which requires it.
+
+%slide
+  %img{src: "/assets/img/scalling-by-adding-instances.png"}
+
+%slide
+  %img{src: "/assets/img/scalling-by-adding-consumers.png"}
+
+%slide{title: "#3 Robustness", format: "textile"}
+  * Backend *deployment with no downtime* (see the schema).
+  * Message *persistency*.
+  * *Acknowledgements* (I've done it, send me the next task).
+
+%slide
+  %img{src: "/assets/img/service-over-http.png"}
+  2 arrows
+  What if the service would go offline?
+  %img{src: "/assets/img/service-via-rabbitmq.png"}
+
+%slide
+  %img{src: "/assets/img/dead-whale-of-twitter.png"}
+
+%slide{title: "Pub/Sub", format: "textile"}
+  Publishers do not send messages to specific subscribers. Published messages are *characterised into classes*, without knowledge of the subscribers. Subscribers express interest in some classes, and *only receive messages they want*.
+
+%slide
+  :javascript
+    // https://github.com/postwait/node-amqp
+    var amqp = require("./node-amqp/amqp");
+    var sys  = require("sys");
+
+    var connection = amqp.createConnection();
+
+    // Wait for connection to become established.
+    connection.on("ready", function () {
+      var exchange = connection.exchange("posts", {type: "topic"});
+
+      // Subscriber.
+      var queue = connection.queue("IT Posts");
+      exchange.on("open", function () {
+        queue.on("open", function () {
+          queue.bind(exchange, "it.dev.#");
+          queue.on("queueBindOk", function () {
+            queue.subscribe(function (message) {
+              sys.puts("A new development post: " + message.data);
+            });
+
+            // Let's publish some test data.
+            exchange.publish("it.dev.javascript", "JS Post");
+            exchange.publish("it.dev.ruby", "Ruby Post");
+            exchange.publish("it.web.ruby", "Sinatra Post");
+            exchange.publish("jewelery.ruby", "Jewelery Post");
+          });
+        });
+      });
+    });
+
+%slide{title: "Other Use-Cases", format: "textile"}
+  * From a browser utilising websockets (games development etc).
+  * *R*emote *p*rocedure *c*all.
+
+%slide{title: "#1 AMQP in BBC", format: "textile"}
+  * Realtime *Tweets Processing*.
+  * As middlewares (download, process, store to S3).
+  * *1000 tweets/sec* = about 90 million a day.
+
+%slide{title: "Protocols & APIs", format: "textile"}
+  * *AMQP*
+  * *STOMP*: HTTP-like protocol, headers & body, request/response
+  * JMS
+  * *Amazon Simple Queue Service*
+  * XMPP (well, kind of)
+  * *Websockets*
+
+%slide{title: "AMQP", format: "textile"}
+  * Invented by *JP Morgan*.
+  * Most widely used.
+  * *Binary* protocol with *minimal overhead*.
+  * http://www.rabbitmq.com/getstarted.html
+
+%slide
+  %img{src: "/assets/img/amqp-schema.png"}
+
+%slide{title: "RabbitMQ", format: "textile"}
+  %img{src: "/assets/img/rabbitmq-logo.png"}
+  * *AMQP natively*, STOMP, XMPP by plugins.
+  * *Most widely used* OSS AMQP broker.
+  * A lot of *plugins* available, writing new ones is quite easy (Erlang).
+
+%slide{title: "ZeroMQ", format: "textile"}
+  * *Brokerless*, provides *socket-like API*.
+  * Supports *advanced routing*.
+  * Leads to *decentralised architecture*.
+  http://zguide.zeromq.org/page:all
+
+%slide
+  %img{src: "/assets/img/rabbitmq-management.png"}
+
+%slide
+  %h1.main Questions please!
+
+%slide
+  %h1.main Cheers for your attention!
